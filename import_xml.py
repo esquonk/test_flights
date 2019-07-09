@@ -1,4 +1,4 @@
-from faresearch.xml_importer import XmlImporter
+from data_import.xml_importer import XmlImporter
 
 
 def run():
