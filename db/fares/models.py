@@ -1,7 +1,8 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, SmallInteger
+from sqlalchemy import Column, Integer, String, ForeignKey, SmallInteger, DateTime
 
 from sqlalchemy.orm import relationship
 
+from db.reference.models import Airline, Airport
 from .. import Base
 
 
@@ -13,10 +14,12 @@ class SearchRequest(IdMixin, Base):
     __tablename__ = 'fares_search_request'
 
     partner_request_id = Column(String(), nullable=False)
+    partner_tag = Column(String(), nullable=False)
 
 
 class Trip(IdMixin, Base):
     __tablename__ = 'fares_trip'
+    flights = relationship('Flight', order_by='Flight.order')
 
 
 class Itinerary(IdMixin, Base):
@@ -39,4 +42,20 @@ class Flight(IdMixin, Base):
     trip_id = Column(Integer, ForeignKey('fares_trip.id'), nullable=False)
     trip = relationship(Trip)
 
-    carrier_id = Column(String(2))
+    carrier_id = Column(Integer, ForeignKey('airline.id'))
+    carrier = relationship(Airline)
+
+    flight_number = Column(String())
+    source_id = Column(Integer, ForeignKey('airport.id'), nullable=False)
+    source = relationship(Airport, primaryjoin=source_id == Airport.id)
+    destination_id = Column(Integer, ForeignKey('airport.id'), nullable=False)
+    destination = relationship(Airport, primaryjoin=destination_id == Airport.id)
+
+    departure = Column(DateTime(timezone=True), nullable=False)
+    arrival = Column(DateTime(timezone=True), nullable=False)
+
+    service_class = Column(String())
+    ticket_type = Column(String())
+
+    number_of_stops = Column(Integer())
+    fare_basis = Column(String())

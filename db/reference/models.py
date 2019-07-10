@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Numeric
 
 from db import Base
 
@@ -17,6 +17,7 @@ class Airport(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(), nullable=False)
+    tz_offset = Column(Numeric())
     tz = Column(String())
     iata = Column(String())
     icao = Column(String())

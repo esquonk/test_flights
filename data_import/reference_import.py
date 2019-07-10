@@ -1,5 +1,6 @@
 import os
 import csv
+from decimal import Decimal
 
 from db.reference.models import Airport, Airline
 
@@ -10,6 +11,16 @@ def import_airports():
     from db.engine import Session
 
     session = Session()
+
+    timezones = {
+        None: None
+    }
+
+    with open(os.path.join('data', 'iata.tzmap'), newline='', encoding="utf8") as csvfile:
+        reader = csv.reader(csvfile, delimiter = '\t')
+        for row in reader:
+            print(row)
+            timezones[row[0]] = row[1]
 
     with open(os.path.join('data', 'airports.dat'), newline='', encoding="utf8") as csvfile:
         reader = csv.reader(csvfile)
@@ -24,7 +35,7 @@ def import_airports():
             airport.name = row[1]
             airport.iata = checknull(row[4])
             airport.icao = checknull(row[5])
-            airport.tz = checknull(row[11])
+            airport.tz = checknull(row[11]) or timezones.get(airport.iata)
 
     session.commit()
 
