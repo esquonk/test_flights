@@ -1,25 +1,19 @@
 import os
 import csv
-from decimal import Decimal
 
-from db.reference.models import Airport, Airline
+from fares.models import db, Airline, Airport
 
 checknull = lambda val: None if val == '\\N' else val
 
 
 def import_airports():
-    from db.engine import Session
-
-    session = Session()
-
     timezones = {
         None: None
     }
 
     with open(os.path.join('data', 'iata.tzmap'), newline='', encoding="utf8") as csvfile:
-        reader = csv.reader(csvfile, delimiter = '\t')
+        reader = csv.reader(csvfile, delimiter='\t')
         for row in reader:
-            print(row)
             timezones[row[0]] = row[1]
 
     with open(os.path.join('data', 'airports.dat'), newline='', encoding="utf8") as csvfile:
@@ -27,36 +21,32 @@ def import_airports():
         for row in reader:
             key = int(row[0])
 
-            airport = session.query(Airport).get(key)
+            airport = db.query(Airport).get(key)
             if airport is None:
                 airport = Airport(id=key)
-                session.add(airport)
+                db.add(airport)
 
             airport.name = row[1]
             airport.iata = checknull(row[4])
             airport.icao = checknull(row[5])
             airport.tz = checknull(row[11]) or timezones.get(airport.iata)
 
-    session.commit()
+    db.commit()
 
 
 def import_airlines():
-    from db.engine import Session
-
-    session = Session()
-
     with open(os.path.join('data', 'airlines.dat'), newline='', encoding="utf8") as csvfile:
         reader = csv.reader(csvfile)
         for row in reader:
             key = int(row[0])
 
-            airline = session.query(Airline).get(key)
+            airline = db.query(Airline).get(key)
             if airline is None:
                 airline = Airline(id=key)
-                session.add(airline)
+                db.add(airline)
 
             airline.name = row[1]
             airline.iata = checknull(row[3])
             airline.icao = checknull(row[4])
 
-    session.commit()
+    db.commit()

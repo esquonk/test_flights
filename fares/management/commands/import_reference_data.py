@@ -1,6 +1,6 @@
 from django.core.management import BaseCommand
 
-from data_import.reference_import import import_airports, import_airlines
+from fares.data_import.reference_import import import_airports, import_airlines
 
 
 class Command(BaseCommand):

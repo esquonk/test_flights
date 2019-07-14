@@ -1,18 +1,17 @@
 import django
 
-from data_import.xml_importer import XmlImporter
-from db.engine import Session
+from fares.data_import.xml_importer import XmlImporter
 
 
 def run():
     django.setup()
-    session = Session()
 
     with open("RS_Via-3.xml", 'rt') as f:
-        importer = XmlImporter(session, f, "3")
+        importer = XmlImporter(f, "3")
         importer.run()
-
-    session.commit()
+    with open("RS_ViaOW.xml", 'rt') as f:
+        importer = XmlImporter(f, "OW")
+        importer.run()
 
 
 if __name__ == "__main__":
