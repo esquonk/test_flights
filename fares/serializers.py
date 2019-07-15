@@ -36,7 +36,7 @@ class FlightSerializer(serializers.Serializer):
         return obj.departure.astimezone(timezone(obj.source.tz))
 
     def get_arrival(self, obj):
-        return obj.departure.astimezone(timezone(obj.destination.tz))
+        return obj.arrival.astimezone(timezone(obj.destination.tz))
 
 
 class TripSerializer(serializers.Serializer):
