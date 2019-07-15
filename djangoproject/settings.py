@@ -42,7 +42,7 @@ MIDDLEWARE = [
 
 ]
 
-ROOT_URLCONF = 'flights.urls'
+ROOT_URLCONF = 'djangoproject.urls'
 
 TEMPLATES = [
     {
@@ -60,7 +60,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'flights.wsgi.application'
+WSGI_APPLICATION = 'djangoproject.wsgi.application'
 
 DATABASES = {
     'default': {
@@ -91,7 +91,7 @@ DEBUG_TOOLBAR_PANELS = [
 ]
 
 DEBUG_TOOLBAR_CONFIG = {
-    'ALCHEMY_DB_ALIASES': 'flights.util.get_db_dict'
+    'ALCHEMY_DB_ALIASES': 'djangoproject.util.get_db_dict'
 }
 
 LANGUAGE_CODE = 'en-us'
