@@ -1,5 +1,7 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, SmallInteger, DateTime, select, Numeric
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
 
 from sqlalchemy.orm import relationship
@@ -39,9 +41,77 @@ class SearchRequest(IdMixin, db.Model):
     partner_tag = db.Column(String(), nullable=False)
 
 
+class Flight(IdMixin, db.Model):
+    __tablename__ = 'fares_flight'
+
+    order = Column(SmallInteger, nullable=False)
+    trip_id = Column(Integer, ForeignKey('fares_trip.id'), nullable=False, index=True)
+    trip = relationship('Trip', back_populates='flights')
+
+    carrier_id = Column(Integer, ForeignKey('airline.id'), index=True)
+    carrier = relationship(Airline)
+
+    flight_number = Column(String())
+    source_id = Column(Integer, ForeignKey('airport.id'), nullable=False, index=True)
+    source = relationship(Airport, foreign_keys=source_id)
+    destination_id = Column(Integer, ForeignKey('airport.id'), nullable=False, index=True)
+    destination = relationship(Airport, foreign_keys=destination_id)
+
+    departure = Column(DateTime(timezone=True), nullable=False)
+    arrival = Column(DateTime(timezone=True), nullable=False)
+
+    service_class = Column(String())
+    ticket_type = Column(String())
+
+    number_of_stops = Column(Integer())
+    fare_basis = Column(String())
+
+
 class Trip(IdMixin, db.Model):
     __tablename__ = 'fares_trip'
-    flights = relationship('Flight', order_by='Flight.order', back_populates='trip')
+
+    flights = relationship(Flight, order_by=Flight.order, back_populates='trip')
+
+    @hybrid_property
+    def source_iata(self):
+        return self.flights[0].source.iata
+
+    @source_iata.expression
+    def source_iata(cls):
+        return select([Airport.iata]).where(
+            Airport.id == select([Flight.source_id]) \
+            .where(Flight.trip_id == cls.id) \
+            .order_by(Flight.order) \
+            .limit(1) \
+            .as_scalar()
+        ).as_scalar()
+
+    @hybrid_property
+    def destination_iata(self):
+        return self.flights[0].source.iata
+
+    @destination_iata.expression
+    def destination_iata(cls):
+        return select([Airport.iata]).where(
+            Airport.id == select([Flight.destination_id]) \
+            .where(Flight.trip_id == cls.id) \
+            .order_by(Flight.order.desc()) \
+            .limit(1) \
+            .as_scalar()
+        ).as_scalar()
+
+
+        # @hybrid_property
+        # def destination(self):
+        #     return self.flights[-1].destination
+        #
+        # @destination.expression
+        # def destination(cls):
+        #     return select([Flight.destination]) \
+        #         .where(Flight.trip_id == cls.id) \
+        #         .order_by(Flight.order.desc()) \
+        #         .limit(1) \
+        #         .as_scalar()
 
     @hybrid_property
     def duration(self):
@@ -93,29 +163,3 @@ class Itinerary(IdMixin, db.Model):
             expr += coalesce(cls.price_infant, cls.price_adult) * infant
 
         return expr
-
-
-class Flight(IdMixin, db.Model):
-    __tablename__ = 'fares_flight'
-
-    order = Column(SmallInteger, nullable=False)
-    trip_id = Column(Integer, ForeignKey('fares_trip.id'), nullable=False, index=True)
-    trip = relationship(Trip, back_populates='flights')
-
-    carrier_id = Column(Integer, ForeignKey('airline.id'), index=True)
-    carrier = relationship(Airline)
-
-    flight_number = Column(String())
-    source_id = Column(Integer, ForeignKey('airport.id'), nullable=False, index=True)
-    source = relationship(Airport, foreign_keys=source_id)
-    destination_id = Column(Integer, ForeignKey('airport.id'), nullable=False, index=True)
-    destination = relationship(Airport, foreign_keys=destination_id)
-
-    departure = Column(DateTime(timezone=True), nullable=False)
-    arrival = Column(DateTime(timezone=True), nullable=False)
-
-    service_class = Column(String())
-    ticket_type = Column(String())
-
-    number_of_stops = Column(Integer())
-    fare_basis = Column(String())

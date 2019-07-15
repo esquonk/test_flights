@@ -4,7 +4,6 @@ from fares.expr import onward_trip, return_trip
 from fares.models import Itinerary
 
 
-
 class TwoWayFilter(BaseFilterBackend):
 
     @staticmethod
@@ -32,19 +31,26 @@ class ItineraryOrderingFilter(OrderingFilter):
     def filter_queryset(self, request, queryset, view):
         ordering = self.get_ordering(request, queryset, view)
 
-        two_way = TwoWayFilter.get_value(request)
-        duration_expr = onward_trip.duration + return_trip.duration \
-            if two_way else onward_trip.duration
-
         if ordering:
             for field in ordering:
-                if field == 'price':
-                    queryset = queryset.order_by(Itinerary.price())
-                elif field == '-price':
-                    queryset = queryset.order_by(Itinerary.price().desc())
-                elif field == 'duration':
-                    queryset = queryset.order_by(duration_expr)
-                elif field == '-duration':
-                    queryset = queryset.order_by(duration_expr.desc())
+                expr = getattr(queryset.statement.c, field.lstrip('-'))
+                if field.startswith('-'):
+                    expr = expr.desc()
+                queryset = queryset.order_by(expr)
+
+        return queryset
+
+
+class AirportFilter(BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+        source = request.query_params.get('source')
+        destination = request.query_params.get('destination')
+
+
+        if source:
+            queryset = queryset.filter(onward_trip.source_iata == source)
+
+        if destination:
+            queryset = queryset.filter(onward_trip.destination_iata == destination)
 
         return queryset

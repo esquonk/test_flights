@@ -9,21 +9,12 @@ Create Date: 2019-07-14 23:48:17.519237
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
-from django.db import migrations, models
 
 # revision identifiers, used by Alembic.
 revision = '0000'
 down_revision = None
 branch_labels = None
 depends_on = None
-
-
-class Migration(migrations.Migration):
-    dependencies = [
-    ]
-
-    operations = [
-    ]
 
 
 def upgrade():

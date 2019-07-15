@@ -30,7 +30,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'flights.middleware.sqlalchemy.SQLAlchemyMiddleware',
+    'django_sorcery.db.middleware.SQLAlchemyMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -75,6 +75,10 @@ DATABASES = {
             }
         }
     }
+}
+
+MIGRATION_MODULES = {
+    'fares': None
 }
 
 REST_FRAMEWORK = {

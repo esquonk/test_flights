@@ -17,10 +17,10 @@ class AirlineSerializer(serializers.Serializer):
 class FlightSerializer(serializers.Serializer):
     id = serializers.IntegerField()
 
-    source = serializers.SerializerMethodField()
-    destination = serializers.SerializerMethodField()
+    source = serializers.CharField(source='source.iata')
+    destination = serializers.CharField(source='destination.iata')
 
-    carrier = serializers.SerializerMethodField()
+    carrier = serializers.CharField(source='carrier.iata')
 
     flight_number = serializers.CharField()
 
@@ -31,15 +31,6 @@ class FlightSerializer(serializers.Serializer):
     ticket_type = serializers.CharField()
     number_of_stops = serializers.IntegerField()
     fare_basis = serializers.CharField()
-
-    def get_source(self, obj):
-        return obj.source.iata
-
-    def get_destination(self, obj):
-        return obj.destination.iata
-
-    def get_carrier(self, obj):
-        return obj.carrier.iata
 
     def get_departure(self, obj):
         return obj.departure.astimezone(timezone(obj.source.tz))
@@ -56,8 +47,12 @@ class TripSerializer(serializers.Serializer):
     duration = serializers.CharField()
 
 
-class ItinerarySerializer(serializers.Serializer):
-    id = serializers.IntegerField()
+class ItineraryResultSerializer(serializers.Serializer):
+    id = serializers.IntegerField(source='Itinerary.id')
 
-    onward_trip = TripSerializer()
-    return_trip = TripSerializer()
+    onward_trip = TripSerializer(source='Itinerary.onward_trip')
+    return_trip = TripSerializer(source='Itinerary.return_trip')
+
+    duration = serializers.CharField()
+    price = serializers.DecimalField(max_digits=20, decimal_places=2)
+    optimal_score = serializers.FloatField()
