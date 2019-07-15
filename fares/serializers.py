@@ -56,3 +56,15 @@ class ItineraryResultSerializer(serializers.Serializer):
     duration = serializers.CharField()
     price = serializers.DecimalField(max_digits=20, decimal_places=2)
     optimal_score = serializers.FloatField()
+
+
+class ItinerarySerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+
+    onward_trip = TripSerializer()
+    return_trip = TripSerializer()
+
+
+class ItineraryDiffSerializer(serializers.Serializer):
+    itinerary_left = ItinerarySerializer()
+    itinerary_right = ItinerarySerializer()

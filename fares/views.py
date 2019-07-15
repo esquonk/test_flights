@@ -3,11 +3,12 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 from sqlalchemy import select, func, extract
 from sqlalchemy.orm import aliased, contains_eager
+from sqlalchemy.sql.functions import coalesce
 
 from fares.expr import return_trip, onward_trip
 from fares.models import Itinerary, Trip, Flight
 from fares.filters import TwoWayFilter, ItineraryOrderingFilter, AirportFilter
-from fares.serializers import ItineraryResultSerializer
+from fares.serializers import ItineraryResultSerializer, ItineraryDiffSerializer
 
 from .models import db
 
@@ -54,15 +55,15 @@ class ListItineraries(ListAPIView):
         min_duration = select([func.min(aliased(queryset.selectable).c.duration)]).as_scalar()
 
         return (
-            (Itinerary.price() / min_price)
-            * (extract('epoch', self.get_duration_expr()) / extract('epoch', min_duration))
+                (Itinerary.price() / min_price)
+                * (extract('epoch', self.get_duration_expr()) / extract('epoch', min_duration))
         )
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
 
         queryset = queryset.add_column(
-           self.get_optimal_score_expr(queryset).label('optimal_score')
+            self.get_optimal_score_expr(queryset).label('optimal_score')
         )
 
         queryset = ItineraryOrderingFilter().filter_queryset(self.request, queryset, self)
@@ -74,3 +75,46 @@ class ListItineraries(ListAPIView):
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+
+
+class ListItineraryDiff(ListAPIView):
+    serializer_class = ItineraryDiffSerializer
+    pagination_class = Pagination
+
+    def itinerary_ids_query(self, left_request_id: int, right_request_id: int):
+        flight_fingerprint = select(
+            [Flight.trip_id,
+             func.concat(Flight.carrier_id, '_', Flight.flight_number).label('flight_fingerprint')]) \
+            .order_by(Flight.order) \
+            .alias("flight_fingerprint")
+
+        itinerary_fingerprint = db.query(Itinerary.id.label('id'),
+                                         func.string_agg(flight_fingerprint.c.flight_fingerprint, '|').label('fingerprint')) \
+            .select_from(Itinerary) \
+            .group_by(Itinerary.id) \
+            .join(flight_fingerprint, flight_fingerprint.c.trip_id == Itinerary.onward_trip_id)
+
+        request_1 = itinerary_fingerprint.filter(Itinerary.request_id == left_request_id).selectable.alias('left')
+        request_2 = itinerary_fingerprint.filter(Itinerary.request_id == right_request_id).selectable.alias('right')
+
+        result = db.query(request_1.c.id.label('left_id'),
+                          request_2.c.id.label('right_id'))\
+            .select_from(request_1)\
+            .join(request_2, request_2.c.fingerprint == request_1.c.fingerprint, full=True)
+
+        return result
+
+    def get_queryset(self):
+        left_id = int(self.request.query_params.get('left_request_id'))
+        right_id = int(self.request.query_params.get('right_request_id'))
+
+        ids = self.itinerary_ids_query(left_id, right_id).selectable.alias('ids')
+        i_left = aliased(Itinerary, name='itinerary_left')
+        i_right = aliased(Itinerary, name='itinerary_right')
+        query = db.query(i_left, i_right)\
+            .select_from(ids)\
+            .outerjoin(i_left, i_left.id == ids.c.left_id) \
+            .outerjoin(i_right, i_right.id == ids.c.right_id)
+
+        return query

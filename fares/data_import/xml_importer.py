@@ -1,6 +1,7 @@
 from decimal import Decimal
 from typing import TextIO
 
+import pytz
 from lxml import etree
 
 import dateutil.parser
@@ -44,14 +45,18 @@ class XmlImporter:
                 destination=destination,
                 departure=timezone(source.tz).localize(
                     dateutil.parser.parse(flight_tag.find('DepartureTimeStamp').text.strip())
-                ),
+                ).astimezone(pytz.utc),
                 arrival=timezone(destination.tz).localize(
                     dateutil.parser.parse(flight_tag.find('ArrivalTimeStamp').text.strip())
-                ),
+                ).astimezone(pytz.utc),
                 service_class=flight_tag.find('Class').text.strip(),
                 ticket_type=flight_tag.find('TicketType').text.strip(),
                 fare_basis=flight_tag.find('FareBasis').text.strip(),
+                number_of_stops=int(flight_tag.find('NumberOfStops').text.strip()),
             )
+            if flight.flight_number == '1005':
+                print(flight_tag.find('DepartureTimeStamp').text.strip(), flight.departure, flight.departure.isoformat())
+
             db.add(flight)
 
         return trip

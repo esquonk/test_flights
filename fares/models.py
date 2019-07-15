@@ -13,7 +13,7 @@ db = databases.get("default")
 
 
 class IdMixin:
-    id = Column(Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
 
 
 class Airline(IdMixin, db.Model):
