@@ -14,6 +14,7 @@ INTERNAL_IPS = [
 
 ALLOWED_HOSTS = [
     '127.0.0.1',
+    '192.168.99.100',
     '172.104.135.190',
 ]
 
@@ -110,4 +111,4 @@ USE_L10N = True
 USE_TZ = True
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join('/static')
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
