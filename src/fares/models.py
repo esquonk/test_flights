@@ -96,7 +96,6 @@ class Trip(IdMixin, db.Model):
             .as_scalar()
         ).as_scalar()
 
-
         # @hybrid_property
         # def destination(self):
         #     return self.flights[-1].destination

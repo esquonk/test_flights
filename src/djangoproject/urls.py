@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.urls import path, include
-from rest_framework import routers
 
 urlpatterns = [
     path('api/fares/', include('fares.urls'))

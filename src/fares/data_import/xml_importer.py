@@ -1,10 +1,9 @@
 from decimal import Decimal
 from typing import TextIO
 
+import dateutil.parser
 import pytz
 from lxml import etree
-
-import dateutil.parser
 from pytz import timezone
 
 from fares.models import SearchRequest, Itinerary, Trip, Flight, Airline, Airport, db
@@ -54,8 +53,6 @@ class XmlImporter:
                 fare_basis=flight_tag.find('FareBasis').text.strip(),
                 number_of_stops=int(flight_tag.find('NumberOfStops').text.strip()),
             )
-            if flight.flight_number == '1005':
-                print(flight_tag.find('DepartureTimeStamp').text.strip(), flight.departure, flight.departure.isoformat())
 
             db.add(flight)
 
@@ -92,7 +89,6 @@ class XmlImporter:
 
         db.add(itinerary)
         return itinerary
-
 
     def run(self):
         tree = etree.parse(self.stream)

@@ -1,5 +1,10 @@
 FROM ubuntu:latest
 
+WORKDIR /app
+
+ENV LC_ALL C.UTF-8
+ENV LANG C.UTF-8
+
 RUN apt-get update -y && \
     apt-get install --no-install-recommends -y -q \
     python3 python3-dev python3-pip \
@@ -8,15 +13,16 @@ RUN apt-get update -y && \
     gettext \
     unzip wget cmake build-essential libffi-dev libssl-dev
 
-RUN pip3 install wheel
+RUN pip3 install --upgrade pip
+RUN pip3 install pipenv
 
-ADD . /app
+COPY src /app
+COPY data /app-data
 
-WORKDIR /app
+COPY Pipfile ./
 
-COPY requirements.txt ./
+RUN pipenv install --skip-lock --system --dev
 
-RUN pip3 install --no-cache-dir -r requirements.txt
+RUN python3 /app/manage.py collectstatic --no-input
 
 EXPOSE 8000
-CMD exec gunicorn djangoproject.wsgi:application --bind 0.0.0.0:8000 --workers 3

@@ -9,7 +9,7 @@ from sqlalchemy.sql.functions import coalesce
 
 from fares.expr import return_trip, onward_trip
 from fares.filters import TwoWayFilter, ItineraryOrderingFilter, AirportFilter
-from fares.models import Itinerary, Trip, Flight
+from fares.models import Itinerary, Trip, Flight, Airport
 from fares.serializers import ItineraryResultSerializer, ItineraryDiffSerializer, RequestCompareSerializer
 from .models import db
 
@@ -190,11 +190,33 @@ class CompareRequests(APIView):
 
         return query
 
+    def get_routes(self, request_id):
+        source_port = aliased(Airport, name='src')
+        destination = aliased(Airport, name='dst')
+
+        itineraries = db.query(Itinerary,
+                               func.jsonb_agg(func.jsonb_build_array(
+
+                                   source_port.iata,
+
+                                   destination.iata)).label('route')) \
+            .select_from(Itinerary) \
+            .outerjoin(onward_trip, Itinerary.onward_trip) \
+            .outerjoin(Flight, onward_trip.flights) \
+            .join(source_port, Flight.source) \
+            .join(destination, Flight.destination) \
+            .group_by(Itinerary.id)
+
+        return [tuple(tuple(v) for v in x[0]) for x in db.query(itineraries.selectable.alias().c.route).distinct()]
+
     def get(self, request):
         self.init_params(request)
 
         left_query = self.get_query(self.left_id)
         right_query = self.get_query(self.right_id)
+
+        routes_left = frozenset(self.get_routes(self.left_id))
+        routes_right = frozenset(self.get_routes(self.right_id))
 
         result = {
             'fastest': self.compare(
@@ -210,7 +232,14 @@ class CompareRequests(APIView):
             'optimal': self.compare(
                 left_query.order_by(left_query.statement.c.optimal_score).first(),
                 right_query.order_by(left_query.statement.c.optimal_score).first(),
-            )
+            ),
+
+            'routes': {
+                'only_left': list(routes_left - routes_right),
+                'only_right': list(routes_right - routes_left),
+                'both': list(routes_left | routes_right)
+            }
+
         }
 
         data = self.serializer_class(result).data

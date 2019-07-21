@@ -4,15 +4,16 @@ import simplejson
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-SECRET_KEY = 'tc!08-3sy^vgav$s0ylp+d4gwgjvnau%q-vsg^+t$!b!&73^+6'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'tc!08-3sy^vgav$s0ylp+d4gwgjvnau%q-vsg^+t$!b!&73^+6')
 
-DEBUG = True
+DEBUG = int(os.environ.get('DEBUG', 0))
 
 INTERNAL_IPS = [
     '127.0.0.1',
 ]
 
 ALLOWED_HOSTS = [
+    '127.0.0.1',
     '172.104.135.190',
 ]
 
@@ -49,7 +50,7 @@ ROOT_URLCONF = 'djangoproject.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'DIRS': [os.path.join(BASE_DIR, '../../templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -66,10 +67,12 @@ WSGI_APPLICATION = 'djangoproject.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'flights',
-        'USER': 'flights',
-        'PASSWORD': 'flights',
+        'ENGINE': os.environ.get('SQL_ENGINE', 'django.db.backends.postgresql'),
+        'NAME': os.environ.get('SQL_DATABASE', 'flights'),
+        'USER': os.environ.get('SQL_USER', 'flights'),
+        'PASSWORD': os.environ.get('SQL_PASSWORD', 'flights'),
+        'HOST': os.environ.get('SQL_HOST', 'localhost'),
+        'PORT': os.environ.get('SQL_PORT', '5432'),
         'ALCHEMY_OPTIONS': {
             'engine_options': {
                 'json_serializer': simplejson.dumps,
@@ -107,3 +110,4 @@ USE_L10N = True
 USE_TZ = True
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join('/static')

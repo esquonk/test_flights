@@ -1,22 +1,22 @@
-import os
 import csv
+import os
 
 from fares.models import db, Airline, Airport
 
 checknull = lambda val: None if val == '\\N' else val
 
 
-def import_airports():
+def import_airports(dir: str):
     timezones = {
         None: None
     }
 
-    with open(os.path.join('data', 'iata.tzmap'), newline='', encoding="utf8") as csvfile:
+    with open(os.path.join(dir, 'iata.tzmap'), newline='', encoding="utf8") as csvfile:
         reader = csv.reader(csvfile, delimiter='\t')
         for row in reader:
             timezones[row[0]] = row[1]
 
-    with open(os.path.join('data', 'airports.dat'), newline='', encoding="utf8") as csvfile:
+    with open(os.path.join(dir, 'airports.dat'), newline='', encoding="utf8") as csvfile:
         reader = csv.reader(csvfile)
         for row in reader:
             key = int(row[0])
@@ -34,8 +34,8 @@ def import_airports():
     db.commit()
 
 
-def import_airlines():
-    with open(os.path.join('data', 'airlines.dat'), newline='', encoding="utf8") as csvfile:
+def import_airlines(dir: str):
+    with open(os.path.join(dir, 'airlines.dat'), newline='', encoding="utf8") as csvfile:
         reader = csv.reader(csvfile)
         for row in reader:
             key = int(row[0])

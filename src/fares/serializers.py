@@ -105,7 +105,20 @@ class ItineraryCompareSerializer(serializers.Serializer):
     itinerary_right = ItineraryResultSerializer()
 
 
+class RoutesCompareSerializer(serializers.Serializer):
+    only_left = serializers.ListSerializer(child=serializers.ListSerializer(child=serializers.ListSerializer(
+        child=serializers.CharField()
+    )))
+    only_right = serializers.ListSerializer(child=serializers.ListSerializer(child=serializers.ListSerializer(
+        child=serializers.CharField()
+    )))
+    both = serializers.ListSerializer(child=serializers.ListSerializer(child=serializers.ListSerializer(
+        child=serializers.CharField()
+    )))
+
+
 class RequestCompareSerializer(serializers.Serializer):
     cheapest = ItineraryCompareSerializer()
     fastest = ItineraryCompareSerializer()
     optimal = ItineraryCompareSerializer()
+    routes = RoutesCompareSerializer()
