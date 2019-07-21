@@ -12,7 +12,9 @@ INTERNAL_IPS = [
     '127.0.0.1',
 ]
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    '172.104.135.190',
+]
 
 # Application definition
 
