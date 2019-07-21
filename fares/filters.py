@@ -1,6 +1,7 @@
+from rest_framework.exceptions import ValidationError
 from rest_framework.filters import BaseFilterBackend, OrderingFilter
 
-from fares.expr import onward_trip, return_trip
+from fares.expr import onward_trip
 from fares.models import Itinerary
 
 
@@ -46,11 +47,19 @@ class AirportFilter(BaseFilterBackend):
         source = request.query_params.get('source')
         destination = request.query_params.get('destination')
 
+        errors = {}
 
         if source:
-            queryset = queryset.filter(onward_trip.source_iata == source)
+            queryset = queryset.filter(onward_trip.source_iata == source.upper())
+        else:
+            errors['source'] = 'must be IATA airport designation'
 
         if destination:
-            queryset = queryset.filter(onward_trip.destination_iata == destination)
+            queryset = queryset.filter(onward_trip.destination_iata == destination.upper())
+        else:
+            errors['destination'] = 'must be IATA airport designation'
+
+        if errors:
+            raise ValidationError(errors)
 
         return queryset

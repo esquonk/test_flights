@@ -1,13 +1,9 @@
+from django_sorcery.db import databases
 from sqlalchemy import Column, Integer, String, ForeignKey, SmallInteger, DateTime, select, Numeric
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.ext.associationproxy import association_proxy
-from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
-
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.functions import coalesce
-
-from django_sorcery.db import databases
 
 db = databases.get("default")
 
@@ -49,13 +45,13 @@ class Flight(IdMixin, db.Model):
     trip = relationship('Trip', back_populates='flights')
 
     carrier_id = Column(Integer, ForeignKey('airline.id'), index=True)
-    carrier = relationship(Airline)
+    carrier = relationship(Airline, lazy="joined")
 
     flight_number = Column(String())
     source_id = Column(Integer, ForeignKey('airport.id'), nullable=False, index=True)
-    source = relationship(Airport, foreign_keys=source_id)
+    source = relationship(Airport, foreign_keys=source_id, lazy="joined")
     destination_id = Column(Integer, ForeignKey('airport.id'), nullable=False, index=True)
-    destination = relationship(Airport, foreign_keys=destination_id)
+    destination = relationship(Airport, foreign_keys=destination_id, lazy="joined")
 
     departure = Column(DateTime(timezone=True), nullable=False)
     arrival = Column(DateTime(timezone=True), nullable=False)
