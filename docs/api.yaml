@@ -1,0 +1,151 @@
+openapi: 3.0.1
+info:
+  title: Flights Test Project
+  version: '1'
+servers:
+  - url: http://172.104.135.190:8899/api/
+tags:
+  - name: fares
+    description: Query fares info
+paths:
+  /fares/itineraries:
+    get:
+      tags:
+        - fares
+      summary: List flight oprions
+      parameters:
+        - name: limit
+          in: query
+          description: Limit the number of results returned
+          required: false
+          style: form
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          description: Return results after skipping N entries
+          required: false
+          style: form
+          schema:
+            type: integer
+        - name: source
+          in: query
+          description: Source airport IATA code
+          required: true
+          style: form
+          schema:
+            type: string
+        - name: destination
+          in: query
+          description: Destination airport IATA code
+          required: true
+          style: form
+          schema:
+            type: string
+        - name: two_way
+          in: query
+          description: Search for itineraries with return trips
+          required: false
+          style: form
+          schema:
+            type: boolean
+        - name: ordering
+          in: query
+          description: Sort results by field.
+          required: false
+          style: form
+          schema:
+            type: string
+            enum:
+              - 'price'
+              - 'duration'
+              - 'optimal_score'
+              - '-price'
+              - '-duration'
+              - '-optimal_score'
+
+      responses:
+        200:
+          description: Requested flight itineraries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  next:
+                    type: string
+                  previous:
+                    type: string
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Itinerary'
+
+
+        400:
+          description: Invalid request parameters
+          content: {}
+
+components:
+  schemas:
+    Flight:
+      type: object
+      properties:
+        source:
+          type: string
+        destination:
+          type: string
+        carrier:
+          type: string
+        flight_number:
+          type: string
+        departure:
+          type: string
+          format: date-time
+          description: departure time with airport timezone
+        arrival:
+          type: string
+          format: date-time
+          description: arrival time with airport timezone
+        service_class:
+          type: string
+        ticket_type:
+          type: string
+        number_of_stops:
+          type: integer
+        fare_basis:
+          type: string
+
+    Trip:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        flights:
+          type: array
+          items:
+          $ref: '#/components/schemas/Flight'
+        duration:
+          type: integer
+          description: 'total duration in minutes'
+    Itinerary:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        onward_trip:
+          $ref: '#/components/schemas/Trip'
+        return_trip:
+          $ref: '#/components/schemas/Trip'
+        duration:
+          type: integer
+          description: 'total duration in minutes'
+        price:
+          type: number
+        optimal_score:
+          type: number
+          description: 'Rating of this itinerary compared to others in current request. Less is better.'
