@@ -25,10 +25,25 @@ class ListItineraries(ListAPIView):
     filter_backends = (TwoWayFilter, AirportFilter)
     ordering_fields = ('price', 'duration', 'optimal_score')
 
+    def init_params(self, request):
+        try:
+            self.price_args = {
+                'adult': int(request.query_params.get('adult', 1)),
+                'child': int(request.query_params.get('child', 0)),
+                'infant': int(request.query_params.get('infant', 0)),
+            }
+        except (ValueError, TypeError):
+            raise ValidationError({
+                'adult': 'if present, should be integer',
+                'child': 'if present, should be integer',
+                'infant': 'if present, should be integer',
+            })
+
+
     def get_queryset(self):
         query = db.query(Itinerary,
                          self.get_duration_expr().label('duration'),
-                         Itinerary.price().label('price')) \
+                         Itinerary.price(**self.price_args).label('price')) \
             .outerjoin(onward_trip, Itinerary.onward_trip) \
             .outerjoin(return_trip, Itinerary.return_trip) \
             .options(contains_eager(Itinerary.onward_trip, alias=onward_trip).selectinload(Trip.flights),
@@ -47,11 +62,12 @@ class ListItineraries(ListAPIView):
         min_duration = select([func.min(aliased(queryset.selectable).c.duration)]).as_scalar()
 
         return (
-                (Itinerary.price() / min_price)
+                (Itinerary.price(**self.price_args) / min_price)
                 * (extract('epoch', self.get_duration_expr()) / extract('epoch', min_duration))
         )
 
     def list(self, request, *args, **kwargs):
+        self.init_params(request)
         queryset = self.filter_queryset(self.get_queryset())
 
         queryset = queryset.add_column(
@@ -67,6 +83,7 @@ class ListItineraries(ListAPIView):
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
 
 
 class ListItineraryDiff(ListAPIView):

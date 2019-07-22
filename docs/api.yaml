@@ -12,7 +12,7 @@ paths:
     get:
       tags:
         - fares
-      summary: List flight oprions
+      summary: List flight options
       parameters:
         - name: limit
           in: query
@@ -49,6 +49,27 @@ paths:
           style: form
           schema:
             type: boolean
+        - name: adult
+          in: query
+          description: 'Number of adults for price calculation (default = 1)'
+          required: false
+          style: form
+          schema:
+            type: integer
+        - name: child
+          in: query
+          description: 'Number of children for price calculation (default = 0)'
+          required: false
+          style: form
+          schema:
+            type: integer
+        - name: infant
+          in: query
+          description: 'Number of infants for price calculation (default = 0)'
+          required: false
+          style: form
+          schema:
+            type: integer
         - name: ordering
           in: query
           description: Sort results by field.
@@ -87,6 +108,160 @@ paths:
         400:
           description: Invalid request parameters
           content: {}
+  /fares/diff:
+    get:
+      tags:
+        - fares
+      summary: 'Show difference between two search requests flight options'
+      parameters:
+        - name: limit
+          in: query
+          description: Limit the number of results returned
+          required: false
+          style: form
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          description: Return results after skipping N entries
+          required: false
+          style: form
+          schema:
+            type: integer
+        - name: left_request_id
+          in: query
+          description: ID of the first search request to compare
+          style: form
+          schema:
+            type: integer
+        - name: right_request_id
+          in: query
+          description: ID of the second search request to compare
+          style: form
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Comparison of flight itineraries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  next:
+                    type: string
+                  previous:
+                    type: string
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        itinerary_left:
+                          $ref: '#/components/schemas/Itinerary'
+                        itinerary_right:
+                          $ref: '#/components/schemas/Itinerary'
+                        fingerprint:
+                          type: string
+                          description: 'A string representing a trip option. Itineraries from left and right requests are grouped together when they have the same fingerprint.'
+                        changed_fields:
+                          type: array
+                          items:
+                            type: string
+                          description: 'fields that are different between left and right itinerary'
+
+        400:
+          description: Invalid request parameters
+          content: {}
+
+  /fares/compare:
+    get:
+      tags:
+        - fares
+      summary: 'Compare two search requests'
+      parameters:
+        - name: left_request_id
+          in: query
+          description: ID of the first search request to compare
+          style: form
+          schema:
+            type: integer
+        - name: right_request_id
+          in: query
+          description: ID of the second search request to compare
+          style: form
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Comparison of some requests' properties
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cheapest:
+                    type: object
+                    description: 'Cheapest flight options from requests'
+                    properties:
+                      itinerary_left:
+                        $ref: '#/components/schemas/Itinerary'
+                      itinerary_right:
+                        $ref: '#/components/schemas/Itinerary'
+                  fastest:
+                    type: object
+                    description: 'Fastest flight options from requests'
+                    properties:
+                      itinerary_left:
+                        $ref: '#/components/schemas/Itinerary'
+                      itinerary_right:
+                        $ref: '#/components/schemas/Itinerary'
+                  optimal:
+                    type: object
+                    description: 'Best flight options from requests based on optimal_score'
+                    properties:
+                      itinerary_left:
+                        $ref: '#/components/schemas/Itinerary'
+                      itinerary_right:
+                        $ref: '#/components/schemas/Itinerary'
+                  routes:
+                    type: object
+                    properties:
+                      only_left:
+                        description: 'routes available only in left request results'
+                        type: array
+                        items:
+                          type: array
+                          items:
+                            type: array
+                            items:
+                              type: string
+
+                      only_right:
+                        description: 'routes available only in right request results'
+                        type: array
+                        items:
+                          type: array
+                          items:
+                            type: array
+                            items:
+                              type: string
+
+                      both:
+                        description: 'routes available in both requests results'
+                        type: array
+                        items:
+                          type: array
+                          items:
+                            type: array
+                            items:
+                              type: string
+        400:
+          description: Invalid request parameters
+          content: {}
+
 
 components:
   schemas:
