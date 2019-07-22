@@ -96,18 +96,6 @@ class Trip(IdMixin, db.Model):
             .as_scalar()
         ).as_scalar()
 
-        # @hybrid_property
-        # def destination(self):
-        #     return self.flights[-1].destination
-        #
-        # @destination.expression
-        # def destination(cls):
-        #     return select([Flight.destination]) \
-        #         .where(Flight.trip_id == cls.id) \
-        #         .order_by(Flight.order.desc()) \
-        #         .limit(1) \
-        #         .as_scalar()
-
     @hybrid_property
     def duration(self):
         return self.flights[-1].arrival - self.flights[0].departure
